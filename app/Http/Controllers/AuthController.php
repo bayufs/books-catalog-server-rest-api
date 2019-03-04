@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Validator;
+use App\User;
+use JWTAuth;
 
 class AuthController extends Controller
 {
@@ -21,8 +24,16 @@ class AuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function login()
+    public function login(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required',
+            'password'=> 'required'
+        ]);
+        if ($validator->fails()) {
+            return response()->json($validator->errors());
+        }
+
         $credentials = request(['email', 'password']);
 
         if (! $token = auth()->attempt($credentials)) {
@@ -76,7 +87,34 @@ class AuthController extends Controller
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL() * 60
+            'expires_in' => auth()->factory()->getTTL() * 60,
+            'status' => 'success'
         ]);
+    }
+
+    public function register(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|string|email|max:255|unique:users',
+            'name' => 'required',
+            'password'=> 'required'
+        ]);
+        if ($validator->fails()) {
+            return response()->json($validator->errors());
+        }
+        $credentials = [
+            'name' => $request->get('name'),
+            'email' => $request->get('email'),
+            'password' => bcrypt($request->get('password')),
+        ];
+        
+        User::create($credentials);
+
+        $user = User::first();
+        $token = JWTAuth::fromUser($user);
+        
+        return $this->respondWithToken($token);
+
+
     }
 }

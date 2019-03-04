@@ -19,7 +19,7 @@ class BooksController extends Controller
      */
     public function index()
     {
-        $all_books = Books::orderBy('id', 'desc')->paginate(10);
+        $all_books = Books::whereFeatured(0)->orderBy('id', 'desc')->get();
         return BooksResources::collection($all_books);
     }
 
@@ -28,7 +28,7 @@ class BooksController extends Controller
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\Response6
      */
     public function store(Request $request)
     {
@@ -144,7 +144,8 @@ class BooksController extends Controller
             return response()->json($error_msg, 404);
         }
 
-        $input = [
+        if($request->hasFile('image')) {
+            $input = [
             'title'        => $request->input('title'),
             'author'       => $request->input('author'),
             'image'        => $request->file('image')->getClientOriginalName(),
@@ -153,6 +154,17 @@ class BooksController extends Controller
             'description'  => $request->input('description'),
             'category_id'  => $request->input('category_id'),
         ];
+        } else {
+            $input = [
+                'title'        => $request->input('title'),
+                'author'       => $request->input('author'),
+                'link'         => $request->input('link'),
+                'featured'     => $request->input('featured'),
+                'description'  => $request->input('description'),
+                'category_id'  => $request->input('category_id'),
+            ];
+        } 
+        
 
         
         $books = Books::find($request->input('book_id'));
@@ -165,10 +177,13 @@ class BooksController extends Controller
         }
 
         if ($books->fill($input)->save()) {
-            $image_name  = $request->file('image')->getClientOriginalName();
-            $fileName = pathinfo($image_name, PATHINFO_FILENAME);
-            $image_file  = $fileName.'.'.$request->image->getClientOriginalExtension();
-            $request->file('image')->move(public_path('images'), $image_file);
+            if($request->hasFile('image')) {
+                $image_name  = $request->file('image')->getClientOriginalName();
+                $fileName = pathinfo($image_name, PATHINFO_FILENAME);
+                $image_file  = $fileName.'.'.$request->image->getClientOriginalExtension();
+                $request->file('image')->move(public_path('images'), $image_file);
+            }
+            
             
             return new BookResources($books);
         } else {

@@ -23,6 +23,8 @@ class Books extends JsonResource
            'image'    => $this->image,
            'author'   => $this->author,
            'category' => $this->category->name,
+           'description' => $this->description,
+           'created_at' => $this->created_at,
            'redirect' => [
                'href'   => route('books.detail', ['id' => $this->id]),
                'method' => 'GET'

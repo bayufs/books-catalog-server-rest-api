@@ -53,12 +53,12 @@ class Handler extends ExceptionHandler
       
           if($exception instanceof TokenExpiredException  ) {
       
-            return response()->json(['error' =>'Token is expired'], 403);
+            return response()->json(['error' =>'Token is expired'], 401);
       
           }
           if($exception instanceof TokenInvalidException  ) {
       
-            return response()->json(['error' =>'Token is invalid'], 403);
+            return response()->json(['error' =>'Token is invalid'], 401);
       
           }
 
